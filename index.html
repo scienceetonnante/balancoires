@@ -6,11 +6,12 @@
     <!-- Load external libraries first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <!-- Load our stylesheets -->
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
     <h1>Swing Monitor</h1>
     
+    <!-- Added 'controls' class -->
     <div class="controls">
         <div class="control-group">
             <label for="timeWindow">Time Window (seconds):</label>
@@ -21,10 +22,11 @@
             <input type="number" id="sampleInterval" value="100" min="50" max="1000" step="50">
         </div>
         <div class="control-group">
-            <button onclick="startMonitoring()" id="startButton">Start Monitoring</button>
+            <button id="startButton">Start Monitoring</button>
         </div>
     </div>
 
+    <!-- Added 'stats' class -->
     <div class="stats">
         <div>Actual sample rate: <span id="actualRate">-</span> Hz</div>
         <div>Buffer size: <span id="bufferSize">-</span> samples</div>
@@ -33,6 +35,7 @@
         <div>Amplitude: <span id="swingAmplitude">-</span> degrees</div>
     </div>
     
+    <!-- Already had 'values' class -->
     <div class="values">
         <div class="value-box">
             <h3>X-Axis</h3>
@@ -56,15 +59,17 @@
         </div>
     </div>
 
+    <!-- Added 'chart-container' class -->
     <div class="chart-container">
         <canvas id="accelerometerChart"></canvas>
     </div>
 
+    <!-- Added 'chart-container' class -->
     <div class="chart-container">
         <canvas id="angleChart"></canvas>
     </div>
 
-    <!-- Additional debug information section -->
+    <!-- Added 'debug-panel' class -->
     <div class="debug-panel">
         <h3>Debug Information</h3>
         <div>Device orientation: <span id="deviceOrientation">-</span></div>
@@ -73,13 +78,9 @@
     </div>
 
     <!-- Load our scripts in the correct order -->
-    <!-- Analysis must be loaded first as other modules depend on it -->
-    <script src="analysis.js"></script>
-    <!-- Charts depends on analysis for angle calculations -->
-    <script src="charts.js"></script>
-    <!-- Sensors can be loaded after analysis -->
-    <script src="sensors.js"></script>
-    <!-- Main must be loaded last as it uses all other modules -->
-    <script src="main.js"></script>
+    <script src="scripts/analysis.js"></script>
+    <script src="scripts/charts.js"></script>
+    <script src="scripts/sensors.js"></script>
+    <script src="scripts/main.js"></script>
 </body>
 </html>
