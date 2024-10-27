@@ -12,7 +12,7 @@
         }
         .values {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -23,7 +23,7 @@
             text-align: center;
         }
         .chart-container {
-            height: 400px;
+            height: 300px;
             margin-bottom: 20px;
         }
         .controls {
@@ -84,18 +84,27 @@
             <h3>Z-Axis</h3>
             <div id="acc-z">-</div>
         </div>
+        <div class="value-box">
+            <h3>Tilt (deg)</h3>
+            <div id="tilt">-</div>
+        </div>
     </div>
 
     <div class="chart-container">
         <canvas id="accelerometerChart"></canvas>
     </div>
 
+    <div class="chart-container">
+        <canvas id="angleChart"></canvas>
+    </div>
+
     <script>
-        let chart;
+        let accChart, angleChart;
         let lastUpdateTime = 0;
         let sampleCount = 0;
         let monitoringStartTime = 0;
-        let datasets = [];
+        let accDatasets = [];
+        let angleDataset = [];
         
         function calculateBufferSize() {
             const timeWindow = parseFloat(document.getElementById('timeWindow').value);
@@ -103,38 +112,52 @@
             return Math.ceil((timeWindow * 1000) / sampleInterval);
         }
 
-        function initChart() {
+        function initCharts() {
             const maxDataPoints = calculateBufferSize();
-            datasets = [
+            accDatasets = [
                 { label: 'X', data: [], borderColor: 'rgb(255, 99, 132)', fill: false },
                 { label: 'Y', data: [], borderColor: 'rgb(75, 192, 192)', fill: false },
                 { label: 'Z', data: [], borderColor: 'rgb(153, 102, 255)', fill: false }
             ];
 
-            const ctx = document.getElementById('accelerometerChart').getContext('2d');
-            chart = new Chart(ctx, {
+            angleDataset = [
+                { label: 'Tilt Angle', data: [], borderColor: 'rgb(255, 159, 64)', fill: false }
+            ];
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: function(value, index) {
+                                const timeWindow = parseFloat(document.getElementById('timeWindow').value);
+                                const maxPoints = calculateBufferSize();
+                                return (-timeWindow * (1 - index/maxPoints)).toFixed(1);
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time (seconds)'
+                        }
+                    }
+                },
+                animation: {
+                    duration: 0
+                }
+            };
+
+            const ctx1 = document.getElementById('accelerometerChart').getContext('2d');
+            accChart = new Chart(ctx1, {
                 type: 'line',
                 data: {
                     labels: Array(maxDataPoints).fill(''),
-                    datasets: datasets
+                    datasets: accDatasets
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...commonOptions,
                     scales: {
-                        x: {
-                            ticks: {
-                                callback: function(value, index) {
-                                    const timeWindow = parseFloat(document.getElementById('timeWindow').value);
-                                    const maxPoints = calculateBufferSize();
-                                    return (-timeWindow * (1 - index/maxPoints)).toFixed(1);
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Time (seconds)'
-                            }
-                        },
+                        ...commonOptions.scales,
                         y: {
                             min: -10,
                             max: 10,
@@ -143,15 +166,42 @@
                                 text: 'Acceleration (m/s²)'
                             }
                         }
-                    },
-                    animation: {
-                        duration: 0
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('angleChart').getContext('2d');
+            angleChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: Array(maxDataPoints).fill(''),
+                    datasets: angleDataset
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            min: -90,
+                            max: 90,
+                            title: {
+                                display: true,
+                                text: 'Tilt Angle (degrees)'
+                            }
+                        }
                     }
                 }
             });
         }
 
-        function updateChart(x, y, z) {
+        function calculateTiltAngle(y, z) {
+            // Convert acceleration to angle using arctangent
+            // Note: we use -y because y-axis reads negative when aligned with gravity
+            const angleRad = Math.atan2(z, -y);
+            return angleRad * (180 / Math.PI); // Convert to degrees
+        }
+
+        function updateCharts(x, y, z) {
             const now = performance.now();
             const sampleInterval = parseFloat(document.getElementById('sampleInterval').value);
             
@@ -167,18 +217,29 @@
 
             lastUpdateTime = now;
             
-            datasets[0].data.push(x);
-            datasets[1].data.push(y);
-            datasets[2].data.push(z);
+            // Calculate tilt angle
+            const angle = calculateTiltAngle(y, z);
+            document.getElementById('tilt').textContent = angle.toFixed(1);
+
+            // Update acceleration datasets
+            accDatasets[0].data.push(x);
+            accDatasets[1].data.push(y);
+            accDatasets[2].data.push(z);
+
+            // Update angle dataset
+            angleDataset[0].data.push(angle);
 
             const maxDataPoints = calculateBufferSize();
             document.getElementById('bufferSize').textContent = maxDataPoints;
 
-            if (datasets[0].data.length > maxDataPoints) {
-                datasets.forEach(dataset => dataset.data.shift());
+            // Remove old data points if necessary
+            if (accDatasets[0].data.length > maxDataPoints) {
+                accDatasets.forEach(dataset => dataset.data.shift());
+                angleDataset[0].data.shift();
             }
 
-            chart.update();
+            accChart.update();
+            angleChart.update();
         }
 
         function startMonitoring() {
@@ -201,10 +262,13 @@
             monitoringStartTime = performance.now();
             lastUpdateTime = monitoringStartTime;
 
-            if (chart) {
-                chart.destroy();
+            if (accChart) {
+                accChart.destroy();
             }
-            initChart();
+            if (angleChart) {
+                angleChart.destroy();
+            }
+            initCharts();
 
             window.addEventListener('devicemotion', (event) => {
                 const x = event.accelerationIncludingGravity.x;
@@ -216,7 +280,7 @@
                 document.getElementById('acc-z').textContent = z?.toFixed(2) || '-';
 
                 if (x !== null && y !== null && z !== null) {
-                    updateChart(x, y, z);
+                    updateCharts(x, y, z);
                 }
             });
 
@@ -225,9 +289,10 @@
 
         // Update chart when controls change
         document.getElementById('timeWindow').addEventListener('change', () => {
-            if (chart) {
-                chart.destroy();
-                initChart();
+            if (accChart) {
+                accChart.destroy();
+                angleChart.destroy();
+                initCharts();
             }
         });
 
