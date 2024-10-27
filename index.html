@@ -1,151 +1,142 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Accelerometer Data Plot</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Include Chart.js library from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    .data-box {
-      margin: 10px;
-      font-size: 1.2em;
-    }
-    #chart-container {
-      width: 90%;
-      margin: auto;
-    }
-  </style>
+    <title>Accelerometer Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .value-box {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .chart-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
+    <h1>Accelerometer Monitor</h1>
+    
+    <button onclick="startMonitoring()" id="startButton">Start Monitoring</button>
+    
+    <div class="values">
+        <div class="value-box">
+            <h3>X-Axis</h3>
+            <div id="acc-x">-</div>
+        </div>
+        <div class="value-box">
+            <h3>Y-Axis</h3>
+            <div id="acc-y">-</div>
+        </div>
+        <div class="value-box">
+            <h3>Z-Axis</h3>
+            <div id="acc-z">-</div>
+        </div>
+    </div>
 
-  <h1>Phone Accelerometer Data Plot</h1>
+    <div class="chart-container">
+        <canvas id="accelerometerChart"></canvas>
+    </div>
 
-  <!-- Display current accelerometer values -->
-  <div class="data-box">X: <span id="acc-x">-</span></div>
-  <div class="data-box">Y: <span id="acc-y">-</span></div>
-  <div class="data-box">Z: <span id="acc-z">-</span></div>
+    <script>
+        let chart;
+        const maxDataPoints = 50;
+        const datasets = [
+            { label: 'X', data: [], borderColor: 'rgb(255, 99, 132)', fill: false },
+            { label: 'Y', data: [], borderColor: 'rgb(75, 192, 192)', fill: false },
+            { label: 'Z', data: [], borderColor: 'rgb(153, 102, 255)', fill: false }
+        ];
 
-  <!-- Canvas element for the chart -->
-  <div id="chart-container">
-    <canvas id="accChart"></canvas>
-  </div>
-
-  <script>
-    // Initialize arrays to store data
-    const timeData = [];
-    const xData = [];
-    const yData = [];
-    const zData = [];
-
-    // Set up the chart
-    const ctx = document.getElementById('accChart').getContext('2d');
-    const accChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: timeData,
-        datasets: [
-          {
-            label: 'X-axis',
-            data: xData,
-            borderColor: 'red',
-            fill: false,
-          },
-          {
-            label: 'Y-axis',
-            data: yData,
-            borderColor: 'green',
-            fill: false,
-          },
-          {
-            label: 'Z-axis',
-            data: zData,
-            borderColor: 'blue',
-            fill: false,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        animation: false,
-        scales: {
-          x: {
-            type: 'realtime',
-            realtime: {
-              duration: 20000,
-              refresh: 100,
-              delay: 1000,
-              onRefresh: chart => {
-                chart.data.labels.push(Date.now());
-                chart.data.datasets[0].data.push(latestX);
-                chart.data.datasets[1].data.push(latestY);
-                chart.data.datasets[2].data.push(latestZ);
-              }
-            }
-          },
-          y: {
-            suggestedMin: -20,
-            suggestedMax: 20,
-          }
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: 'Real-time Accelerometer Data'
-          }
+        function initChart() {
+            const ctx = document.getElementById('accelerometerChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(maxDataPoints).fill(''),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -10,
+                            max: 10
+                        }
+                    },
+                    animation: {
+                        duration: 0
+                    }
+                }
+            });
         }
-      }
-    });
 
-    let latestX = 0;
-    let latestY = 0;
-    let latestZ = 0;
+        function updateChart(x, y, z) {
+            datasets[0].data.push(x);
+            datasets[1].data.push(y);
+            datasets[2].data.push(z);
 
-    // Check if the device supports DeviceMotionEvent
-    if (window.DeviceMotionEvent) {
-      // iOS 13+ requires explicit permission for motion data
-      if (typeof DeviceMotionEvent.requestPermission === "function") {
-        DeviceMotionEvent.requestPermission()
-          .then((response) => {
-            if (response === "granted") {
-              window.addEventListener("devicemotion", handleMotion);
-            } else {
-              alert("Permission denied to access accelerometer data.");
+            if (datasets[0].data.length > maxDataPoints) {
+                datasets.forEach(dataset => dataset.data.shift());
             }
-          })
-          .catch(console.error);
-      } else {
-        // For browsers that don’t require permission
-        window.addEventListener("devicemotion", handleMotion);
-      }
-    } else {
-      alert("Your device does not support accelerometer data.");
-    }
 
-    // Function to handle the motion event
-    function handleMotion(event) {
-      // Get the acceleration data (x, y, z)
-      const accX = event.acceleration.x || 0;
-      const accY = event.acceleration.y || 0;
-      const accZ = event.acceleration.z || 0;
+            chart.update();
+        }
 
-      // Update the latest values
-      latestX = accX;
-      latestY = accY;
-      latestZ = accZ;
+        function startMonitoring() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            initSensor();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                initSensor();
+            }
+        }
 
-      // Display the data in the HTML
-      document.getElementById("acc-x").textContent = accX.toFixed(2);
-      document.getElementById("acc-y").textContent = accY.toFixed(2);
-      document.getElementById("acc-z").textContent = accZ.toFixed(2);
-    }
-  </script>
+        function initSensor() {
+            if (!chart) {
+                initChart();
+            }
 
+            window.addEventListener('devicemotion', (event) => {
+                const x = event.accelerationIncludingGravity.x;
+                const y = event.accelerationIncludingGravity.y;
+                const z = event.accelerationIncludingGravity.z;
+
+                document.getElementById('acc-x').textContent = x?.toFixed(2) || '-';
+                document.getElementById('acc-y').textContent = y?.toFixed(2) || '-';
+                document.getElementById('acc-z').textContent = z?.toFixed(2) || '-';
+
+                if (x !== null && y !== null && z !== null) {
+                    updateChart(x, y, z);
+                }
+            });
+
+            document.getElementById('startButton').disabled = true;
+        }
+    </script>
 </body>
 </html>
