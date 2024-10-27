@@ -26,17 +26,50 @@
             height: 400px;
             margin-bottom: 20px;
         }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+        }
+        .stats {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <h1>Accelerometer Monitor</h1>
     
-    <button onclick="startMonitoring()" id="startButton">Start Monitoring</button>
+    <div class="controls">
+        <div class="control-group">
+            <label for="timeWindow">Time Window (seconds):</label>
+            <input type="number" id="timeWindow" value="10" min="1" max="60" step="1">
+        </div>
+        <div class="control-group">
+            <label for="sampleInterval">Sample Interval (ms):</label>
+            <input type="number" id="sampleInterval" value="100" min="50" max="1000" step="50">
+        </div>
+        <div class="control-group">
+            <button onclick="startMonitoring()" id="startButton">Start Monitoring</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        Actual sample rate: <span id="actualRate">-</span> Hz<br>
+        Buffer size: <span id="bufferSize">-</span> samples
+    </div>
     
     <div class="values">
         <div class="value-box">
@@ -59,14 +92,25 @@
 
     <script>
         let chart;
-        const maxDataPoints = 50;
-        const datasets = [
-            { label: 'X', data: [], borderColor: 'rgb(255, 99, 132)', fill: false },
-            { label: 'Y', data: [], borderColor: 'rgb(75, 192, 192)', fill: false },
-            { label: 'Z', data: [], borderColor: 'rgb(153, 102, 255)', fill: false }
-        ];
+        let lastUpdateTime = 0;
+        let sampleCount = 0;
+        let monitoringStartTime = 0;
+        let datasets = [];
+        
+        function calculateBufferSize() {
+            const timeWindow = parseFloat(document.getElementById('timeWindow').value);
+            const sampleInterval = parseFloat(document.getElementById('sampleInterval').value);
+            return Math.ceil((timeWindow * 1000) / sampleInterval);
+        }
 
         function initChart() {
+            const maxDataPoints = calculateBufferSize();
+            datasets = [
+                { label: 'X', data: [], borderColor: 'rgb(255, 99, 132)', fill: false },
+                { label: 'Y', data: [], borderColor: 'rgb(75, 192, 192)', fill: false },
+                { label: 'Z', data: [], borderColor: 'rgb(153, 102, 255)', fill: false }
+            ];
+
             const ctx = document.getElementById('accelerometerChart').getContext('2d');
             chart = new Chart(ctx, {
                 type: 'line',
@@ -78,9 +122,26 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value, index) {
+                                    const timeWindow = parseFloat(document.getElementById('timeWindow').value);
+                                    const maxPoints = calculateBufferSize();
+                                    return (-timeWindow * (1 - index/maxPoints)).toFixed(1);
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time (seconds)'
+                            }
+                        },
                         y: {
                             min: -10,
-                            max: 10
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Acceleration (m/s²)'
+                            }
                         }
                     },
                     animation: {
@@ -91,9 +152,27 @@
         }
 
         function updateChart(x, y, z) {
+            const now = performance.now();
+            const sampleInterval = parseFloat(document.getElementById('sampleInterval').value);
+            
+            if (now - lastUpdateTime < sampleInterval) {
+                return;
+            }
+
+            // Update actual sample rate display
+            sampleCount++;
+            const elapsedTime = (now - monitoringStartTime) / 1000;
+            const actualRate = sampleCount / elapsedTime;
+            document.getElementById('actualRate').textContent = actualRate.toFixed(1);
+
+            lastUpdateTime = now;
+            
             datasets[0].data.push(x);
             datasets[1].data.push(y);
             datasets[2].data.push(z);
+
+            const maxDataPoints = calculateBufferSize();
+            document.getElementById('bufferSize').textContent = maxDataPoints;
 
             if (datasets[0].data.length > maxDataPoints) {
                 datasets.forEach(dataset => dataset.data.shift());
@@ -117,9 +196,15 @@
         }
 
         function initSensor() {
-            if (!chart) {
-                initChart();
+            // Reset stats
+            sampleCount = 0;
+            monitoringStartTime = performance.now();
+            lastUpdateTime = monitoringStartTime;
+
+            if (chart) {
+                chart.destroy();
             }
+            initChart();
 
             window.addEventListener('devicemotion', (event) => {
                 const x = event.accelerationIncludingGravity.x;
@@ -135,8 +220,20 @@
                 }
             });
 
-            document.getElementById('startButton').disabled = true;
+            document.getElementById('startButton').textContent = 'Restart';
         }
+
+        // Update chart when controls change
+        document.getElementById('timeWindow').addEventListener('change', () => {
+            if (chart) {
+                chart.destroy();
+                initChart();
+            }
+        });
+
+        document.getElementById('sampleInterval').addEventListener('change', () => {
+            lastUpdateTime = 0; // Reset timing to apply new interval immediately
+        });
     </script>
 </body>
 </html>
