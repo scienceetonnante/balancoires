@@ -2,28 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Accelerometer Data Plot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Accelerometer Data</title>
+  <!-- Include Chart.js library from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin: 50px;
+      margin: 20px;
     }
     .data-box {
-      margin: 20px;
-      font-size: 1.5em;
+      margin: 10px;
+      font-size: 1.2em;
+    }
+    #chart-container {
+      width: 90%;
+      margin: auto;
     }
   </style>
 </head>
 <body>
 
-  <h1>Phone Accelerometer Data</h1>
-  <p class="data-box">X: <span id="acc-x">-</span></p>
-  <p class="data-box">Y: <span id="acc-y">-</span></p>
-  <p class="data-box">Z: <span id="acc-z">-</span></p>
+  <h1>Phone Accelerometer Data Plot</h1>
+
+  <!-- Display current accelerometer values -->
+  <div class="data-box">X: <span id="acc-x">-</span></div>
+  <div class="data-box">Y: <span id="acc-y">-</span></div>
+  <div class="data-box">Z: <span id="acc-z">-</span></div>
+
+  <!-- Canvas element for the chart -->
+  <div id="chart-container">
+    <canvas id="accChart"></canvas>
+  </div>
 
   <script>
+    // Initialize arrays to store data
+    const timeData = [];
+    const xData = [];
+    const yData = [];
+    const zData = [];
+
+    // Set up the chart
+    const ctx = document.getElementById('accChart').getContext('2d');
+    const accChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: timeData,
+        datasets: [
+          {
+            label: 'X-axis',
+            data: xData,
+            borderColor: 'red',
+            fill: false,
+          },
+          {
+            label: 'Y-axis',
+            data: yData,
+            borderColor: 'green',
+            fill: false,
+          },
+          {
+            label: 'Z-axis',
+            data: zData,
+            borderColor: 'blue',
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: {
+            type: 'realtime',
+            realtime: {
+              duration: 20000,
+              refresh: 100,
+              delay: 1000,
+              onRefresh: chart => {
+                chart.data.labels.push(Date.now());
+                chart.data.datasets[0].data.push(latestX);
+                chart.data.datasets[1].data.push(latestY);
+                chart.data.datasets[2].data.push(latestZ);
+              }
+            }
+          },
+          y: {
+            suggestedMin: -20,
+            suggestedMax: 20,
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Real-time Accelerometer Data'
+          }
+        }
+      }
+    });
+
+    let latestX = 0;
+    let latestY = 0;
+    let latestZ = 0;
+
     // Check if the device supports DeviceMotionEvent
     if (window.DeviceMotionEvent) {
       // iOS 13+ requires explicit permission for motion data
@@ -51,6 +133,11 @@
       const accX = event.acceleration.x || 0;
       const accY = event.acceleration.y || 0;
       const accZ = event.acceleration.z || 0;
+
+      // Update the latest values
+      latestX = accX;
+      latestY = accY;
+      latestZ = accZ;
 
       // Display the data in the HTML
       document.getElementById("acc-x").textContent = accX.toFixed(2);
