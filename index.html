@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Swing Monitor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +9,28 @@
     <!-- Load our stylesheets -->
     <link rel="stylesheet" href="main.css">
 </head>
+
 <body>
     <h1>Swing Monitor</h1>
     
     <!-- Added 'controls' class -->
     <div class="controls">
         <div class="control-group">
-            <label for="timeWindow">Time Window (seconds):</label>
-            <input type="number" id="timeWindow" value="30" min="10" max="60" step="5">
-        </div>
-        <div class="control-group">
-            <label for="sampleInterval">Sample Interval (ms):</label>
-            <input type="number" id="sampleInterval" value="100" min="50" max="1000" step="50">
-        </div>
-        <div class="control-group">
             <button id="startButton">Start Monitoring</button>
         </div>
     </div>
+
+
+    <!-- Added 'chart-container' class -->
+    <div class="chart-container">
+        <canvas id="accelerometerChart"></canvas>
+    </div>
+
+    <!-- Added 'chart-container' class -->
+    <div class="chart-container">
+        <canvas id="angleChart"></canvas>
+    </div>
+
 
     <!-- Added 'stats' class -->
     <div class="stats">
@@ -34,6 +40,7 @@
         <div>Period: <span id="swingPeriod">-</span> seconds</div>
         <div>Amplitude: <span id="swingAmplitude">-</span> degrees</div>
     </div>
+    
     
     <!-- Already had 'values' class -->
     <div class="values">
@@ -59,23 +66,8 @@
         </div>
     </div>
 
-    <!-- Added 'chart-container' class -->
-    <div class="chart-container">
-        <canvas id="accelerometerChart"></canvas>
-    </div>
 
-    <!-- Added 'chart-container' class -->
-    <div class="chart-container">
-        <canvas id="angleChart"></canvas>
-    </div>
 
-    <!-- Added 'debug-panel' class -->
-    <div class="debug-panel">
-        <h3>Debug Information</h3>
-        <div>Device orientation: <span id="deviceOrientation">-</span></div>
-        <div>Sensor status: <span id="sensorStatus">-</span></div>
-        <div>Last update: <span id="lastUpdate">-</span></div>
-    </div>
 
     <!-- Load our scripts in the correct order -->
     <script src="analysis.js"></script>

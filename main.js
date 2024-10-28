@@ -1,6 +1,10 @@
 // Main application class to coordinate all swing monitoring functionality
 class SwingMonitor {
     constructor() {
+        // Constants that were previously controls
+        this.TIME_WINDOW_SECONDS = 30;
+        this.SAMPLE_INTERVAL_MS = 100;
+
         // Initialize class properties
         this.sampleCount = 0;
         this.monitoringStartTime = 0;
@@ -10,14 +14,10 @@ class SwingMonitor {
         // Bind methods to maintain proper 'this' context
         this.handleSensorData = this.handleSensorData.bind(this);
         this.startMonitoring = this.startMonitoring.bind(this);
-        this.handleTimeWindowChange = this.handleTimeWindowChange.bind(this);
-        this.handleSampleIntervalChange = this.handleSampleIntervalChange.bind(this);
         
         // Store DOM element references
         this.elements = {
             startButton: document.getElementById('startButton'),
-            timeWindow: document.getElementById('timeWindow'),
-            sampleInterval: document.getElementById('sampleInterval'),
             actualRate: document.getElementById('actualRate'),
             bufferSize: document.getElementById('bufferSize'),
             accX: document.getElementById('acc-x'),
@@ -50,9 +50,7 @@ class SwingMonitor {
     }
 
     calculateBufferSize() {
-        const timeWindow = parseFloat(this.elements.timeWindow.value);
-        const sampleInterval = parseFloat(this.elements.sampleInterval.value);
-        return Math.ceil((timeWindow * 1000) / sampleInterval);
+        return Math.ceil((this.TIME_WINDOW_SECONDS * 1000) / this.SAMPLE_INTERVAL_MS);
     }
 
     async startMonitoring() {
@@ -81,10 +79,9 @@ class SwingMonitor {
         if (!this.isMonitoring) return;
 
         const now = performance.now();
-        const sampleInterval = parseFloat(this.elements.sampleInterval.value);
 
         // Check if we should process this sample based on our desired interval
-        if (now - this.lastUpdateTime < sampleInterval) {
+        if (now - this.lastUpdateTime < this.SAMPLE_INTERVAL_MS) {
             return;
         }
 
@@ -127,16 +124,6 @@ class SwingMonitor {
         
         this.elements.actualRate.textContent = actualRate.toFixed(1);
         this.elements.bufferSize.textContent = this.calculateBufferSize();
-    }
-
-    handleTimeWindowChange() {
-        if (this.isMonitoring) {
-            this.charts.initCharts();
-        }
-    }
-
-    handleSampleIntervalChange() {
-        this.lastUpdateTime = 0; // Reset timing to apply new interval immediately
     }
 
     stop() {

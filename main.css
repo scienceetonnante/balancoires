@@ -92,24 +92,10 @@ button:hover {
 
 /* Chart containers */
 .chart-container {
-    height: 450px;  /* Increased height for better visibility */
+    height: 250px;
     margin-bottom: 40px;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background: white;
-}
-
-/* Debug panel */
-.debug-panel {
-    margin-top: 30px;
-    padding: 15px;
-    background: #f8f8f8;
-    border-radius: 8px;
-    font-size: 0.9em;
-}
-
-.debug-panel h3 {
-    margin-top: 0;
-    color: #666;
 }

@@ -38,8 +38,7 @@ class ChartManager {
                 x: {
                     ticks: {
                         callback: (value, index) => {
-                            const timeWindow = parseFloat(document.getElementById('timeWindow').value);
-                            return (-timeWindow * (1 - index/this.maxDataPoints)).toFixed(1);
+                            return (-window.app.TIME_WINDOW_SECONDS * (1 - index/this.maxDataPoints)).toFixed(1);
                         }
                     },
                     title: {
