@@ -2,7 +2,8 @@
 <html>
 
 <head>
-    <title>Swing Monitor</title>
+    <meta charset="UTF-8">
+    <title>Mesure ta balançoire !</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Load external libraries first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
@@ -11,34 +12,35 @@
 </head>
 
 <body>
-    <h1>Swing Monitor</h1>
+    <h1>Mesure ta balançoire !</h1>
     
     <!-- Added 'controls' class -->
     <div class="controls">
         <div class="control-group">
-            <button id="startButton">Start Monitoring</button>
+            <button id="startButton">Démarrer la mesure</button>
         </div>
     </div>
 
 
     <!-- Added 'chart-container' class -->
     <div class="chart-container">
+        <canvas id="angleChart"></canvas>
+    </div>
+    
+    <!-- Added 'chart-container' class -->
+    <div class="chart-container">
         <canvas id="accelerometerChart"></canvas>
     </div>
 
-    <!-- Added 'chart-container' class -->
-    <div class="chart-container">
-        <canvas id="angleChart"></canvas>
-    </div>
 
 
     <!-- Added 'stats' class -->
     <div class="stats">
-        <div>Actual sample rate: <span id="actualRate">-</span> Hz</div>
-        <div>Buffer size: <span id="bufferSize">-</span> samples</div>
-        <div>Swing frequency: <span id="swingFreq">-</span> Hz</div>
-        <div>Period: <span id="swingPeriod">-</span> seconds</div>
-        <div>Amplitude: <span id="swingAmplitude">-</span> degrees</div>
+        <div>Taux rafraichissement: <span id="actualRate">-</span> Hz</div>
+        <div>Taille: <span id="bufferSize">-</span> échantillons</div>
+        <div>Frequence: <span id="swingFreq">-</span> Hz</div>
+        <div>Période: <span id="swingPeriod">-</span> secondes</div>
+        <div>Amplitude: <span id="swingAmplitude">-</span> degrés</div>
     </div>
     
     
@@ -62,7 +64,7 @@
         <div class="value-box">
             <h3>Tilt</h3>
             <div id="tilt">-</div>
-            <div class="unit">degrees</div>
+            <div class="unit">degrés</div>
         </div>
     </div>
 

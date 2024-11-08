@@ -13,7 +13,7 @@ class ChartManager {
         ];
         
         this.angleDataset = [
-            { label: 'Tilt Angle', data: [], borderColor: 'rgb(255, 159, 64)', fill: false }
+            { label: 'Inclinaison', data: [], borderColor: 'rgb(255, 159, 64)', fill: false }
         ];
     }
 
@@ -81,7 +81,7 @@ class ChartManager {
                         max: 10,
                         title: {
                             display: true,
-                            text: 'Acceleration (m/s²)'
+                            text: 'Accelération (m/s²)'
                         }
                     }
                 },
@@ -89,7 +89,7 @@ class ChartManager {
                     ...commonOptions.plugins,
                     title: {
                         display: true,
-                        text: 'Acceleration vs Time'
+                        text: 'Accélération au cours du temps'
                     }
                 }
             }
@@ -113,7 +113,7 @@ class ChartManager {
                         max: 90,
                         title: {
                             display: true,
-                            text: 'Tilt Angle (degrees)'
+                            text: "Angle d'inclinaison (degrees)"
                         }
                     }
                 },
@@ -121,7 +121,7 @@ class ChartManager {
                     ...commonOptions.plugins,
                     title: {
                         display: true,
-                        text: 'Swing Angle vs Time'
+                        text: "Angle d'inclinaison au cours du temps"
                     }
                 }
             }
